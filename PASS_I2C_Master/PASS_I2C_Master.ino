@@ -2,7 +2,9 @@
 
 #define NUM_SLAVES 6  // Number of slave devices
 
-int data[NUM_SLAVES][5];  // Data array to store values from each slave, it has always 5, the slaves that only have 4 sensors use a 0 at the end
+int data[NUM_SLAVES][5];          // Data array to store values from each slave, it has always 5, the slaves that only have 4 sensors use a 0 at the end
+int previousData[NUM_SLAVES][5];  // Array to store previous data
+int validData[NUM_SLAVES][5];     // Array to store previous data
 
 
 #define NUM1
@@ -60,7 +62,7 @@ void setup() {
 }
 
 void loop() {
-  delay(1000);
+  delay(2000);
   for (int i = 0; i < sensAmount; i++) {
     aus = (startNum + i) * 10;
     an = aus + 1;
@@ -80,30 +82,30 @@ void loop() {
   }
 
   requestSlaveData();
+  validataSlaveData();
 
-  // Print the data nice and clean to read
-  // for (int i = 0; i < NUM_SLAVES; i++) {
-  //   Serial.print("Slave ");
-  //   Serial.print(i + 1);
-  //   Serial.print(": ");
-  //   for (int j = 0; j < 5; j++) {
-  //     Serial.print(data[i][j]);
-  //     Serial.print("\t");
-  //   }
-  //   Serial.println();
-  // }
-
-  // only print data that changed
-  static int previousData[NUM_SLAVES][5];  // Array to store previous data
-  // Compare current data with previous data and print the changed values
+  //Print the data nice and clean to read
   for (int i = 0; i < NUM_SLAVES; i++) {
+    Serial.print("Slave ");
+    Serial.print(i + 1);
+    Serial.print(": ");
     for (int j = 0; j < 5; j++) {
-      if (data[i][j] != previousData[i][j] && data[i][j] != 0) {
-        Serial.println(data[i][j]);
-        previousData[i][j] = data[i][j];  // Update previous data
-      }
+      Serial.print(validData[i][j]);
+      Serial.print("\t");
     }
+    Serial.println();
   }
+
+
+  // Only print data that changed
+  // for (int i = 0; i < NUM_SLAVES; i++) {
+  //   for (int j = 0; j < 5; j++) {
+  //     if (validData[i][j] != previousData[i][j]) {
+  //       Serial.println(validData[i][j]);
+  //       previousData[i][j] = validData[i][j];  // Update previous data
+  //     }
+  //   }
+  // }
 }
 
 
@@ -120,7 +122,7 @@ void requestSlaveData() {
         Serial.print("Slave No. ");
         Serial.print(slave);
         Serial.println(" Communication timeout occurred");
-        Wire.endTransmission();
+        Wire.endTransmission(slave);
         break;
       }
       currentTime = millis();
@@ -128,8 +130,18 @@ void requestSlaveData() {
 
     if (Wire.available() == sizeof(data[slave - 1])) {
       int i = slave - 1;
-      size_t bytesRead = Wire.readBytes((uint8_t*)&data[i], sizeof(data[i]));
+      Wire.readBytes((uint8_t*)&data[i], sizeof(data[i]));
     }
-    Wire.endTransmission();
+    Wire.endTransmission(slave);
+  }
+}
+
+void validataSlaveData() {
+  for (int i = 0; i < NUM_SLAVES; i++) {
+    for (int j = 0; j < 5; j++) {
+      if (data[i][j] > 0 && data[i][j] < 272) {
+        validData[i][j] = data[i][j];
+      }
+    }
   }
 }

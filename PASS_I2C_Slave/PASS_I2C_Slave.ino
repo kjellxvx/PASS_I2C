@@ -1,6 +1,6 @@
 #include <Wire.h>
 
-#define NUM3
+#define NUM6
 // NUM 1  1 >> 5 THIS IS NOT A TRUE SLAVE; it's the master
 // NUM 2  6 >> 11
 // NUM 3  11 >> 15
