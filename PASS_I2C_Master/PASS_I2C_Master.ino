@@ -55,6 +55,7 @@ int aus = 0;
 
 void setup() {
   Serial.begin(9600);
+  //Serial.println("STARTED");
   Wire.begin();  // Join I2C bus as master
   for (int i = 0; i < 5; i++) {
     pinMode(pins[i], INPUT);
@@ -62,61 +63,23 @@ void setup() {
 }
 
 void loop() {
-  delay(2000);
-  for (int i = 0; i < sensAmount; i++) {
-    aus = (startNum + i) * 10;
-    an = aus + 1;
-
-    valueState[i] = digitalRead(pins[i]);
-
-    if (valueState[i] == 0) {
-      data[0][i] = an;
-      //localData[i] = an;
-      //Serial.println(localData[i]);
-    }
-    if (valueState[i] == 1) {
-      data[0][i] = aus;
-      //localData[i] = aus;
-      //Serial.println(localData[i]);
-    }
-  }
-
+  delay(1000);
+  getLocalData();
   requestSlaveData();
   validataSlaveData();
-
-  //Print the data nice and clean to read
-  for (int i = 0; i < NUM_SLAVES; i++) {
-    Serial.print("Slave ");
-    Serial.print(i + 1);
-    Serial.print(": ");
-    for (int j = 0; j < 5; j++) {
-      Serial.print(validData[i][j]);
-      Serial.print("\t");
-    }
-    Serial.println();
-  }
-
-
-  // Only print data that changed
-  // for (int i = 0; i < NUM_SLAVES; i++) {
-  //   for (int j = 0; j < 5; j++) {
-  //     if (validData[i][j] != previousData[i][j]) {
-  //       Serial.println(validData[i][j]);
-  //       previousData[i][j] = validData[i][j];  // Update previous data
-  //     }
-  //   }
-  // }
+  printData();
 }
 
-
 void requestSlaveData() {
-  unsigned long startTime = millis();
-  unsigned long timeout = 3000;  // Timeout value in milliseconds
+  //Serial.println("requesting slave data");
+  long startTime = millis();
+  unsigned long timeout = 500;  // Timeout value in milliseconds
 
   for (int slave = 2; slave <= NUM_SLAVES; slave++) {
     Wire.beginTransmission(slave);
     Wire.requestFrom(slave, sizeof(data[slave - 1]));
     unsigned long currentTime = millis();
+
     while (Wire.available() < sizeof(data[slave - 1])) {
       if (currentTime - startTime >= timeout) {
         Serial.print("Slave No. ");
@@ -134,13 +97,61 @@ void requestSlaveData() {
     }
     Wire.endTransmission(slave);
   }
+  //Serial.println("Slave data request completed");
+}
+
+
+
+void getLocalData() {
+  //Serial.println("getting local data");
+  for (int i = 0; i < sensAmount; i++) {
+    aus = (startNum + i) * 10;
+    an = aus + 1;
+
+    valueState[i] = digitalRead(pins[i]);
+
+    if (valueState[i] == 0) {
+      data[0][i] = an;
+      //localData[i] = an;
+      //Serial.println(localData[i]);
+    }
+    if (valueState[i] == 1) {
+      data[0][i] = aus;
+      //localData[i] = aus;
+      //Serial.println(localData[i]);
+    }
+  }
 }
 
 void validataSlaveData() {
+  //Serial.println("validating data");
   for (int i = 0; i < NUM_SLAVES; i++) {
     for (int j = 0; j < 5; j++) {
       if (data[i][j] > 0 && data[i][j] < 272) {
         validData[i][j] = data[i][j];
+      }
+    }
+  }
+}
+
+void printData() {
+  //Print the data nice and clean to read
+  // for (int i = 0; i < NUM_SLAVES; i++) {
+  //   Serial.print("Slave ");
+  //   Serial.print(i + 1);
+  //   Serial.print(": ");
+  //   for (int j = 0; j < 5; j++) {
+  //     Serial.print(validData[i][j]);
+  //     Serial.print("\t");
+  //   }
+  //   Serial.println();
+  // }
+  // Only print data that changed
+  for (int i = 0; i < NUM_SLAVES; i++) {
+    for (int j = 0; j < 5; j++) {
+      if (validData[i][j] != previousData[i][j]) {
+        Serial.println(validData[i][j]);
+        previousData[i][j] = validData[i][j];  // Update previous data
       }
     }
   }
