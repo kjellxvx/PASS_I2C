@@ -1,6 +1,6 @@
 #include <Wire.h>
 
-#define NUM5
+#define NUM1
 // NUM 1  1 >> 5 THIS IS NOT A TRUE SLAVE; it's the master
 // NUM 2  6 >> 11
 // NUM 3  11 >> 15
@@ -56,18 +56,17 @@ void setup() {
 }
 
 void loop() {
-  delay(500);
   for (int i = 0; i < sensAmount; i++) {
     aus = (startNum + i) * 10;
     an = aus + 1;
     valueState[i] = digitalRead(pins[i]);
     if (valueState[i] == 0) {
       data[i] = an;
-      Serial.println(data[i]);
+      //Serial.println(data[i]);
     }
     if (valueState[i] == 1) {
       data[i] = aus;
-      Serial.println(data[i]);
+      //Serial.println(data[i]);
     }
   }
 }
